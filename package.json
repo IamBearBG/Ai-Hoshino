@@ -23,16 +23,16 @@
 		"MD",
 		"baileys-md"
 	],
-	"homepage": "https://github.com/StarlightsTeam/Ai-Hoshino",
+	"homepage": "https://github.com/IamBearBG/Ai-Hoshino",
 	"author": {
-		"name": "おDaniel.xyz⁩"
+		"name": "Mateo⁩"
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/StarlightsTeam/Ai-Hoshino.git"
+		"url": "git+https://github.com/IamBearBG/Ai-Hoshino.git"
 	},
 	"bugs": {
-		"url": "https://github.com/StarlightsTeam/Ai-Hoshino/issues"
+		"url": "https://github.com/IamBearBG/Ai-Hoshino/issues"
 	},
 	"license": "GPL-3.0-or-later",
 	"dependencies": {
