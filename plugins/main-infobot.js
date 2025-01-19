@@ -2,6 +2,7 @@ import { cpus as _cpus, totalmem, freemem, platform, hostname, version, release,
 import speed from 'performance-now'
 import { performance } from 'perf_hooks'
 import { sizeFormatter } from 'human-readable'
+import ws from 'ws'
 
 let format = sizeFormatter({
     std: 'JEDEC',
@@ -11,9 +12,15 @@ let format = sizeFormatter({
 })
 
 let handler = async (m, { conn, usedPrefix }) => {
-   let bot = global.db.data.settings[conn.user.jid]
-   let _uptime = process.uptime() * 1000
-   let uptime = (_uptime).toTimeString()
+   let uniqueUsers = new Map()
+
+   global.conns.forEach((conn) => {
+     if (conn.user && conn.ws.socket && conn.ws.socket.readyState !== ws.CLOSED) {
+       uniqueUsers.set(conn.user.jid, conn)
+     }
+   })
+   let users = [...uniqueUsers.values()]
+   let totalUsers = users.length
    let totalreg = Object.keys(global.db.data.users).length
    let totalbots = Object.keys(global.db.data.settings).length
    let totalStats = Object.values(global.db.data.stats).reduce((total, stat) => total + stat.total, 0)
@@ -48,17 +55,18 @@ let handler = async (m, { conn, usedPrefix }) => {
          irq: 0
       }
    })
-   let _muptime
-   if (process.send) {
+   	let _muptime
+    if (process.send) {
       process.send('uptime')
       _muptime = await new Promise(resolve => {
-         process.once('message', resolve)
-         setTimeout(resolve, 1000)
+        process.once('message', resolve)
+        setTimeout(resolve, 1000)
       }) * 1000
-   }
+    }
+    let muptime = clockString(_muptime)
    let timestamp = speed()
    let latensi = speed() - timestamp
-   let teks = ` –  *I N F O  -  B O T*
+   let txt = ` –  *I N F O  -  B O T*
 
 ┌  ✩  *Creador* : @${owner[0][0].split('@s.whatsapp.net')[0]}
 │  ✩  *Prefijo* : [  ${usedPrefix}  ]
@@ -84,7 +92,10 @@ let handler = async (m, { conn, usedPrefix }) => {
 
 *≡  _NodeJS Uso de memoria_*
 ${'```' + Object.keys(used).map((key, _, arr) => `${key.padEnd(Math.max(...arr.map(v => v.length)), ' ')}: ${format(used[key])}`).join('\n') + '```'}`
-await conn.sendFile(m.chat, img, 'thumbnail.jpg', txt, m, null, rcanal) { contextInfo: { mentionedJid: [owner[0][0] + '@s.whatsapp.net'], externalAdReply: { mediaUrl: false, mediaType: 1, description: false, title: '↷✦╎Info - Bot╎⭐˖ ⸙',body: false, previewType: 0, thumbnail: miniurl, sourceUrl: ''}}})
+       txt += `> 🚩 ${textbot}`
+
+let img = `./storage/img/menu.jpg`
+await conn.sendFile(m.chat, img, 'thumbnail.jpg', txt, m, null, rcanal)
 }
 handler.help = ['info']
 handler.tags = ['main']
@@ -92,16 +103,14 @@ handler.command = ['info', 'infobot']
 
 export default handler
 
-function toNum(number) {
-    if (number >= 1000 && number < 1000000) {
-        return (number / 1000).toFixed(1) + 'k'
-    } else if (number >= 1000000) {
-        return (number / 1000000).toFixed(1) + 'M'
-    } else if (number <= -1000 && number > -1000000) {
-        return (number / 1000).toFixed(1) + 'k'
-    } else if (number <= -1000000) {
-        return (number / 1000000).toFixed(1) + 'M'
-    } else {
-        return number.toString()
-    }
+function formatNumber(number) {
+  return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function clockString(ms) {
+  let d = isNaN(ms) ? '--' : Math.floor(ms / 86400000)
+  let h = isNaN(ms) ? '--' : Math.floor(ms / 3600000) % 24
+  let m = isNaN(ms) ? '--' : Math.floor(ms / 60000) % 60
+  let s = isNaN(ms) ? '--' : Math.floor(ms / 1000) % 60
+  return [d, ' D ', h, ' H ', m, ' M ', s, ' S'].map(v => v.toString().padStart(2, 0)).join('')
 }
