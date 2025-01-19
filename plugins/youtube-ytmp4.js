@@ -1,45 +1,43 @@
-import Starlights from '@StarlightsTeam/Scraper'
-import fetch from 'node-fetch' 
-let limit = 100
+import fetch from 'node-fetch';
 
-let handler = async (m, { conn, args, text, isPrems, isOwner, usedPrefix, command }) => {
-if (!args[0]) return conn.reply(m.chat, '[ ✰ ] Ingresa el enlace del vídeo de *YouTube* junto al comando.\n\n`» Ejemplo :`\n' + `> *${usedPrefix + command}* https://youtu.be/QSvaCSt8ixs`, m, rcanal)
+let handler = async (m, { conn, text, usedPrefix, command }) => {
+    if (!text) return conn.reply(m.chat, '🚩 Ingresa un link de youtube', m);
 
-await m.react('🕓')
-try {
-let { title, duration, size, thumbnail, dl_url } = await Starlights.ytmp4v2(args[0])
+    try {
+        await m.react('🕒');
+        let api = await fetch(`https://apidl.asepharyana.cloud/api/downloader/ytmp4?url=${text}&quality=360`);
+        let json = await api.json();
+        let { title, author, authorUrl, lengthSeconds, views, uploadDate, thumbnail, description, duration, downloadUrl, quality } = json;
+        
+        let HS = `*Titulo :* ${title}\nDuración : ${duration}\nCalidad : ${quality}p`;
 
-let img = await (await fetch(`${thumbnail}`)).buffer()
-if (size.split('MB')[0] >= limit) return conn.reply(m.chat, `El archivo pesa mas de ${limit} MB, se canceló la Descarga.`, m, rcanal).then(_ => m.react('✖️'))
-	let txt = '`乂  Y O U T U B E  -  M P 4`\n\n'
-       txt += `	✩   *Titulo* : ${title}\n`
-       txt += `	✩   *Duración* : ${duration}\n`
-       txt += `	✩   *Tamaño* : ${size}\n\n`
-       txt += `> *- ↻ El vídeo se esta enviando espera un momento, soy lenta. . .*`
-await conn.sendMessage(m.chat, {image: img, caption: txt }, {quoted: m})
-await conn.sendMessage(m.chat, { video: { url: dl_url }, caption: `${title}`, mimetype: 'video/mp4', fileName: `${title}` + `.mp4`}, {quoted: m })
-await m.react('✅')
-} catch {
-try {
-let { title, size, quality, thumbnail, dl_url } = await Starlights.ytmp4(args[0])
+        let durationInSeconds = 0;
+        if (duration.includes("min")) {
+            let minutes = parseFloat(duration.replace(" min", ""));
+            durationInSeconds = Math.round(minutes * 60); 
+        }
 
-let img = await (await fetch(`${thumbnail}`)).buffer()
-if (size.split('MB')[0] >= limit) return conn.reply(m.chat, `El archivo pesa mas de ${limit} MB, se canceló la Descarga.`, m, rcanal).then(_ => m.react('✖️'))
-	let txt = '`乂  Y O U T U B E  -  M P 4`\n\n'
-       txt += `	✩   *Titulo* : ${title}\n`
-       txt += `	✩   *Calidad* : ${quality}\n`
-       txt += `	✩   *Tamaño* : ${size}\n\n`
-       txt += `> *- ↻ El vídeo se esta enviando espera un momento, soy lenta. . .*`
-await conn.sendFile(m.chat, img, 'thumbnail.jpg', txt, m, null, rcanal)
-await conn.sendMessage(m.chat, { video: { url: dl_url }, caption: `${title}`, mimetype: 'video/mp4', fileName: `${title}` + `.mp4`}, {quoted: m })
-await m.react('✅')
-} catch {
-await m.react('✖️')
-}}}
-handler.help = ['ytmp4 *<link yt>*']
-handler.tags = ['downloader']
-handler.command = ['ytmp4', 'ytv', 'yt']
-//handler.limit = 1
-handler.register = true 
+        if (durationInSeconds >= 2400) {
+            await conn.sendMessage(m.chat, { 
+                document: { url: downloadUrl }, 
+                mimetype: 'video/mp4', 
+                fileName: `${title}.mp4`, 
+                caption: HS 
+            }, { quoted: m });
+        } else {
+            await conn.sendMessage(m.chat, { 
+                video: { url: downloadUrl }, 
+                caption: HS 
+            }, { quoted: m });
+        }
 
-export default handler
+        await m.react('✅');
+    } catch (error) {
+        console.error(error);
+        await m.react('✖');
+    }
+};
+
+handler.command = ['ytmp4'];
+
+export default handler;
