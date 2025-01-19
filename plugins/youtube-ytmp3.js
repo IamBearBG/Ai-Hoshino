@@ -1,71 +1,63 @@
-import Starlights from '@StarlightsTeam/Scraper'
-import fetch from 'node-fetch'
-import Sph from 'ytdl-mp3'
+import fetch from 'node-fetch';
 
-const limit = 100
+let handler = async (m, { conn, text }) => {
+  if (!text) {
+    await m.react('✖️');
+    throw '🚩 Ingresa un enlace de YouTube.';
+  }
 
-let handler = async (m, { conn, args, usedPrefix, command }) => {
-    if (!args[0]) {
-        return m.reply('[ ✰ ] Ingresa el enlace del vídeo de *YouTube* junto al comando.\n\n`» Ejemplo :`\n' +`> *${usedPrefix + command}* https://youtu.be/QSvaCSt8ixs`)
-    }
+  const ytRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
+  if (!ytRegex.test(text)) {
+    await m.react('✖');
+    throw '🚩 Ingresa un enlace válido de YouTube.';
+  }
 
-    await m.react('🕓') 
-    try {
-        let { title, duration, size, thumbnail, dl_url } = await Starlights.ytmp3v2(args[0])
+  try {
+    await m.react('🕒');
 
-        if (parseFloat(size.split('MB')[0]) >= limit) {
-            return m.reply(`El archivo pesa más de ${limit} MB, se canceló la descarga.`).then(() => m.react('✖️'))
+    let videoId = text.split('v=')[1]?.split('&')[0] || text.split('/').pop();
+    let apiURL = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+
+    let response = await fetch(apiURL);
+    if (!response.ok) throw '🚩 No se pudo obtener información del video. Verifica la URL proporcionada.';
+
+    let videoData = await response.json();
+
+    let ytData = {
+      url: text,
+      title: videoData.title || 'Sin título',
+      thumbnail: videoData.thumbnail_url || `https://img.youtube.com/vi/${videoId}/0.jpg`
+    };
+
+    await conn.sendMessage(m.chat, {
+      audio: {
+        url: `https://kepolu-ytdl.hf.space/yt/dl?url=${ytData.url}&type=audio`
+      },
+      mimetype: 'audio/mpeg',
+      contextInfo: {
+        externalAdReply: {
+          title: ytData.title,
+          body: 'Lets Go World',
+          mediaType: 2,
+          mediaUrl: ytData.url,
+          thumbnailUrl: ytData.thumbnail,
+          sourceUrl: ytData.url,
+          containsAutoReply: true,
+          renderLargerThumbnail: true,
+          showAdAttribution: false,
         }
+      }
+    }, { quoted: m });
 
-        let img = await (await fetch(thumbnail)).buffer()
-        let txt = '`乂  Y O U T U B E  -  M P 3`\n\n' +
-                  `	✩   *Título* : ${title}\n` +
-                  `	✩   *Duración* : ${duration}\n` +
-                  `	✩   *Tamaño* : ${size}\n\n` +
-                  '> *- ↻ El audio se está enviando, espera un momento...*'
+    await m.react('✅');
+  } catch (error) {
+    console.error(error);
+    await m.react('✖');
+    conn.reply(m.chat, 'Ocurrió un error al intentar descargar el audio.', m);
+  }
+};
 
-        await conn.sendMessage(m.chat, { image: img, caption: txt }, { quoted: m })
-        await conn.sendMessage(m.chat, { audio: { url: dl_url }, fileName: `${title}.mp3`, mimetype: 'audio/mp4' }, { quoted: m })
-        await m.react('✅')
-    } catch {
-        try {
-            let { title, size, quality, thumbnail, dl_url } = await Starlights.ytmp3(args[0])
-
-            if (parseFloat(size.split('MB')[0]) >= limit) {
-                return m.reply(`El archivo pesa más de ${limit} MB, se canceló la descarga.`).then(() => m.react('✖️'))
-            }
-
-            let img = await (await fetch(thumbnail)).buffer()
-            let txt = '`乂  Y O U T U B E  -  M P 3`\n\n' +
-                      `	✩   *Título* : ${title}\n` +
-                      `	✩   *Calidad* : ${quality}\n` +
-                      `	✩   *Tamaño* : ${size}\n\n` +
-                      '> *- ↻ El audio se está enviando, espera un momento...*'
-
-            await conn.sendFile(m.chat, img, 'thumbnail.jpg', txt, m)
-            await conn.sendMessage(m.chat, { audio: { url: dl_url }, fileName: `${title}.mp3`, mimetype: 'audio/mp4' }, { quoted: m })
-            await m.react('✅')
-        } catch {
-            try {
-                let cxf = await Sph.ytdl(args[0])
-                let txt = '`乂  Y O U T U B E  -  M P 3`\n\n' +
-                          `	✩   *Título* : ${cxf.title}\n` +
-                          `	✩   *Calidad* : ${cxf.quality}\n` +
-                          `	✩   *Url* : ${cxf.url}\n\n` +
-                          '> *- ↻ El audio se está enviando, espera un momento...*'
-
-                await conn.sendMessage(m.chat, { image: { url: cxf.thumbnail }, caption: txt }, { quoted: m })
-                await conn.sendMessage(m.chat, { audio: { url: cxf.dl_url }, fileName: `${cxf.title}.mp3`, mimetype: 'audio/mp4' }, { quoted: m })
-                await m.react('✅')
-            } catch {
-                await m.react('✖️')
-            }
-        }
-    }
-}
-handler.help = ['ytmp3 *<link yt>*']
-handler.tags = ['downloader']
-handler.command = ['ytmp3', 'yta', 'fgmp3']
-handler.register = true
-
-export default handler
+handler.help = ['ytmp3 *<url>*'];
+handler.command = ['ytmp3'];
+handler.tags = ['dl'];
+export default handler;
