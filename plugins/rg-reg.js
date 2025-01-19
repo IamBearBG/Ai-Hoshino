@@ -40,7 +40,7 @@ let handler = async function (m, { conn, text, usedPrefix, command }) {
   txt += `   └ ✩  (≧▽≦)\n`;
   txt += `┗━━━━━━━━━━━━━━━━━━━━━━━`;
 
-  await conn.sendMessage(m.chat, { text: txt, image: img, canal, m}, { quoted: m });
+  await conn.sendMessage(m.chat, { text: txt, image: img}, { quoted: m });
   await m.react('✅');
 }
 
