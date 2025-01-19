@@ -89,9 +89,6 @@ let handler = async (m, { conn, usedPrefix }) => {
 │  ✩  *${groupsIn.length - groupsIn.length}* Grupos Salidos
 │  ✩  *${chats.length - groupsIn.length}* Chats Privados
 └  ✩  *${chats.length}* Chats Totales
-
-*≡  _NodeJS Uso de memoria_*
-${'```' + Object.keys(used).map((key, _, arr) => `${key.padEnd(Math.max(...arr.map(v => v.length)), ' ')}: ${format(used[key])}`).join('\n') + '```'}`
        txt += `> 🚩 ${textbot}`
 
 let img = `./storage/img/menu.jpg`
