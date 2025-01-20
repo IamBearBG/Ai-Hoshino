@@ -11,6 +11,7 @@ import axios from 'axios'
 global.owner = [
   ['51939658716', 'Mateo⁩', true],
   ['525544876071', 'The Carlos', true],
+  ['51913776697', 'Haru ✯', true],
 ]
 
 //*─ׄ─ׅ─ׄ─⭒─ׄ─ׅ─ׄ─⭒─ׄ─ׅ─ׄ─⭒─ׄ─ׅ─ׄ─⭒─ׄ─ׅ─ׄ─⭒─ׄ─ׅ─ׄ─*
